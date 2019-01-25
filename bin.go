@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 type tag string
@@ -64,4 +65,53 @@ func order(endianness tag) binary.ByteOrder {
 		return binary.BigEndian
 	}
 	return binary.LittleEndian
+}
+
+func checkCondition(cond tag, parent reflect.Value) bool {
+	if cond.nonEmpty() {
+		v := strings.Split(string(cond), ":")
+		t := v[0]
+		c := v[1]
+		var op string
+		switch {
+		case strings.Contains(c, "=="):
+			op = "=="
+		case strings.Contains(c, "!="):
+			op = "!="
+		}
+		v = strings.Split(c, op)
+		l := v[0]
+		r := v[1]
+		getField := func() reflect.Value {
+			v := parent
+			pathElements := strings.Split(l, ".")
+			for _, e := range pathElements {
+				v = unpoint(v.FieldByName(e))
+			}
+			return v
+		}
+		switch t {
+		case "uint":
+			lv := uint64(getField().Uint())
+			n, _ := strconv.Atoi(r)
+			rv := uint64(n)
+			switch op {
+			case "==":
+				return lv == rv
+			case "!=":
+				return lv != rv
+			}
+		default:
+			panic("Unknown condition type: " + t)
+		}
+	}
+	return true
+}
+
+func unpoint(p reflect.Value) reflect.Value {
+	if p.Kind() == reflect.Ptr {
+		return unpoint(p.Elem())
+	} else {
+		return p
+	}
 }

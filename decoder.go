@@ -3,8 +3,6 @@ package bin
 import (
 	"bytes"
 	"encoding/binary"
-	"math"
-	"strings"
 
 	"reflect"
 	"strconv"
@@ -93,10 +91,8 @@ func (d *decoder) array(value reflect.Value, tags tags) {
 }
 
 func (d *decoder) uint(parent reflect.Value, value reflect.Value, tags tags, bitmaskBytes *uint64) {
-	if tags.cond().nonEmpty() {
-		if !checkCondition(tags.cond(), parent) {
-			return
-		}
+	if !checkCondition(tags.cond(), parent) {
+		return
 	}
 	if value.CanAddr() {
 		if tags.bits().nonEmpty() {
@@ -120,40 +116,9 @@ func (d *decoder) uint(parent reflect.Value, value reflect.Value, tags tags, bit
 	}
 }
 
-func checkCondition(cond tag, parent reflect.Value) bool {
-	v := strings.Split(string(cond), ":")
-	t := v[0]
-	c := v[1]
-	var op string
-	switch {
-	case strings.Contains(c, "=="):
-		op = "=="
-	case strings.Contains(c, "!="):
-		op = "!="
-	}
-	v = strings.Split(c, op)
-	l := v[0]
-	r := v[1]
-	switch t {
-	case "uint":
-		lv := uint64(parent.FieldByName(l).Uint())
-		n, _ := strconv.Atoi(r)
-		rv := uint64(n)
-		switch op {
-		case "==":
-			return lv == rv
-		case "!=":
-			return lv != rv
-		}
-	}
-	return true
-}
-
 func (d *decoder) string(parent reflect.Value, value reflect.Value, tags tags) {
-	if tags.cond().nonEmpty() {
-		if !checkCondition(tags.cond(), parent) {
-			return
-		}
+	if !checkCondition(tags.cond(), parent) {
+		return
 	}
 	if tags.hex().nonEmpty() {
 		size, _ := strconv.Atoi(string(tags.hex()))
@@ -194,8 +159,4 @@ func (d *decoder) readUint(endianness tag, size int) uint64 {
 		}
 	}
 	return v
-}
-
-func firstBitPosition(n uint64) uint8 {
-	return uint8(math.Log2(float64(n & -n)))
 }

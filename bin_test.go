@@ -344,6 +344,98 @@ func (s *MySuite) TestDecodeUnsizedArray(c *C) {
 	c.Assert(res, DeepEquals, str)
 }
 
+func (s *MySuite) TestDecodeConditional(c *C) {
+	type Struct struct {
+		V1 uint8
+		V2 uint16 `cond:"uint:V1==2"`
+		V3 uint8  `cond:"uint:V1==3"`
+	}
+
+	expected := &Struct{V1: 2, V2: 4, V3: 0}
+	res := &Struct{}
+	payload := []uint8{2, 4, 0}
+	Decode(payload, res)
+
+	c.Assert(res, DeepEquals, expected)
+
+	expected = &Struct{V1: 3, V2: 0, V3: 4}
+	res = &Struct{}
+	payload = []uint8{3, 4}
+	Decode(payload, res)
+
+	c.Assert(res, DeepEquals, expected)
+}
+
+func (s *MySuite) TestDecodeConditionalDeep(c *C) {
+	type Inner struct {
+		V uint8
+	}
+
+	type Struct struct {
+		V1 *Inner
+		V2 uint16 `cond:"uint:V1.V==2"`
+		V3 uint8  `cond:"uint:V1.V==3"`
+	}
+
+	expected := &Struct{V1: &Inner{2}, V2: 4, V3: 0}
+	res := &Struct{}
+	payload := []uint8{2, 4, 0}
+	Decode(payload, res)
+
+	c.Assert(res, DeepEquals, expected)
+
+	expected = &Struct{V1: &Inner{3}, V2: 0, V3: 4}
+	res = &Struct{}
+	payload = []uint8{3, 4}
+	Decode(payload, res)
+
+	c.Assert(res, DeepEquals, expected)
+}
+
+func (s *MySuite) TestEncodeConditional(c *C) {
+	type Struct struct {
+		V1 uint8
+		V2 uint16 `cond:"uint:V1==2"`
+		V3 uint8  `cond:"uint:V1==3"`
+	}
+
+	st := &Struct{V1: 2, V2: 4, V3: 0}
+	expected := []uint8{2, 4, 0}
+	res := Encode(st)
+
+	c.Assert(res, DeepEquals, expected)
+
+	st = &Struct{V1: 3, V2: 0, V3: 4}
+	expected = []uint8{3, 4}
+	res = Encode(st)
+
+	c.Assert(res, DeepEquals, expected)
+}
+
+func (s *MySuite) TestEncodeConditionalDeep(c *C) {
+	type Inner struct {
+		V uint8
+	}
+
+	type Struct struct {
+		V1 *Inner
+		V2 uint16 `cond:"uint:V1.V==2"`
+		V3 uint8  `cond:"uint:V1.V==3"`
+	}
+
+	st := &Struct{V1: &Inner{2}, V2: 4, V3: 0}
+	expected := []uint8{2, 4, 0}
+	res := Encode(st)
+
+	c.Assert(res, DeepEquals, expected)
+
+	st = &Struct{V1: &Inner{3}, V2: 0, V3: 4}
+	expected = []uint8{3, 4}
+	res = Encode(st)
+
+	c.Assert(res, DeepEquals, expected)
+}
+
 func (s *MySuite) TestDecodeStruct(c *C) {
 	type Bitmask struct {
 		F0 uint8

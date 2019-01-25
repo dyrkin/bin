@@ -40,9 +40,9 @@ func (e *encoder) strukt(value reflect.Value) {
 		case reflect.Ptr:
 			e.pointer(field)
 		case reflect.String:
-			e.string(field, tags)
+			e.string(value, field, tags)
 		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			e.uint(field, tags, &bitmaskBytes)
+			e.uint(value, field, tags, &bitmaskBytes)
 		case reflect.Array:
 			e.array(field, tags)
 		case reflect.Slice:
@@ -60,9 +60,9 @@ func (e *encoder) slice(value reflect.Value, tags tags) {
 		sliceElement := value.Index(i)
 		switch sliceElement.Kind() {
 		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			e.uint(sliceElement, tags, nil)
+			e.uint(value, sliceElement, tags, nil)
 		case reflect.String:
-			e.string(sliceElement, tags)
+			e.string(value, sliceElement, tags)
 		case reflect.Ptr:
 			e.pointer(sliceElement)
 		case reflect.Struct:
@@ -77,7 +77,10 @@ func (e *encoder) array(value reflect.Value, tags tags) {
 	}
 }
 
-func (e *encoder) string(value reflect.Value, tags tags) {
+func (e *encoder) string(parent reflect.Value, value reflect.Value, tags tags) {
+	if !checkCondition(tags.cond(), parent) {
+		return
+	}
 	s := value.String()
 	if tags.hex().nonEmpty() {
 		size, _ := strconv.Atoi(string(tags.hex()))
@@ -89,7 +92,10 @@ func (e *encoder) string(value reflect.Value, tags tags) {
 	}
 }
 
-func (e *encoder) uint(value reflect.Value, tags tags, bitmaskBytes *uint64) {
+func (e *encoder) uint(parent reflect.Value, value reflect.Value, tags tags, bitmaskBytes *uint64) {
+	if !checkCondition(tags.cond(), parent) {
+		return
+	}
 	if tags.bits().nonEmpty() {
 		bytes := *bitmaskBytes
 		if tags.bitmask() == "start" {
