@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
+	"io"
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
@@ -594,4 +595,58 @@ func Benchmark_JSON(b *testing.B) {
 			json.Unmarshal(enc, out)
 		}
 	})
+}
+
+type MySerializable struct {
+	AttributeValue interface{}
+}
+
+func (m *MySerializable) Serialize(w io.Writer) {
+	var b [1]byte
+	switch t := m.AttributeValue.(type) {
+	case string:
+		b[0] = 1
+		w.Write(b[:])
+		b[0] = uint8(len(t))
+		w.Write(b[:])
+		w.Write([]byte(t))
+	case uint8:
+		b[0] = 2
+		w.Write(b[:])
+		b[0] = t
+		w.Write(b[:])
+	}
+}
+
+func (m *MySerializable) Deserialize(r io.Reader) {
+	var b [1]byte
+	r.Read(b[:])
+	switch b[0] {
+	case 1:
+		r.Read(b[:])
+		buf := make([]byte, b[0])
+		r.Read(buf)
+		m.AttributeValue = string(buf)
+	case 2:
+		r.Read(b[:])
+		m.AttributeValue = b[0]
+	}
+}
+
+func (s *MySuite) TestEncodeSerializable(c *C) {
+	type Struct struct {
+		M *MySerializable
+	}
+	v := &Struct{&MySerializable{uint8(5)}}
+	res := Encode(v)
+	c.Assert(res, DeepEquals, []byte{2, 5})
+}
+
+func (s *MySuite) TestDecodeSerializable(c *C) {
+	type Struct struct {
+		M *MySerializable
+	}
+	res := &Struct{}
+	Decode([]byte{2, 5}, res)
+	c.Assert(res, DeepEquals, &Struct{&MySerializable{uint8(5)}})
 }

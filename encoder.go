@@ -2,6 +2,7 @@ package bin
 
 import (
 	"bytes"
+	"io"
 	"reflect"
 	"strconv"
 
@@ -36,19 +37,21 @@ func (e *encoder) strukt(value reflect.Value) {
 		field := value.Field(i)
 		fieldType := value.Type().Field(i)
 		tags := tags(fieldType.Tag)
-		switch field.Kind() {
-		case reflect.Ptr:
-			e.pointer(field)
-		case reflect.String:
-			e.string(value, field, tags)
-		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			e.uint(value, field, tags, &bitmaskBytes)
-		case reflect.Array:
-			e.array(field, tags)
-		case reflect.Slice:
-			e.slice(field, tags)
-		case reflect.Interface:
-			e.pointer(field)
+		if checkCondition(tags.cond(), value) {
+			switch field.Kind() {
+			case reflect.Ptr:
+				e.pointer(field)
+			case reflect.String:
+				e.string(field, tags)
+			case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				e.uint(field, tags, &bitmaskBytes)
+			case reflect.Array:
+				e.array(field, tags)
+			case reflect.Slice:
+				e.slice(field, tags)
+			case reflect.Interface:
+				e.pointer(field)
+			}
 		}
 	}
 }
@@ -60,9 +63,9 @@ func (e *encoder) slice(value reflect.Value, tags tags) {
 		sliceElement := value.Index(i)
 		switch sliceElement.Kind() {
 		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			e.uint(value, sliceElement, tags, nil)
+			e.uint(sliceElement, tags, nil)
 		case reflect.String:
-			e.string(value, sliceElement, tags)
+			e.string(sliceElement, tags)
 		case reflect.Ptr:
 			e.pointer(sliceElement)
 		case reflect.Struct:
@@ -77,10 +80,7 @@ func (e *encoder) array(value reflect.Value, tags tags) {
 	}
 }
 
-func (e *encoder) string(parent reflect.Value, value reflect.Value, tags tags) {
-	if !checkCondition(tags.cond(), parent) {
-		return
-	}
+func (e *encoder) string(value reflect.Value, tags tags) {
 	s := value.String()
 	if tags.hex().nonEmpty() {
 		size, _ := strconv.Atoi(string(tags.hex()))
@@ -92,10 +92,7 @@ func (e *encoder) string(parent reflect.Value, value reflect.Value, tags tags) {
 	}
 }
 
-func (e *encoder) uint(parent reflect.Value, value reflect.Value, tags tags, bitmaskBytes *uint64) {
-	if !checkCondition(tags.cond(), parent) {
-		return
-	}
+func (e *encoder) uint(value reflect.Value, tags tags, bitmaskBytes *uint64) {
 	if tags.bits().nonEmpty() {
 		bytes := *bitmaskBytes
 		if tags.bitmask() == "start" {
@@ -116,8 +113,16 @@ func (e *encoder) uint(parent reflect.Value, value reflect.Value, tags tags, bit
 	}
 }
 
+func serialize(value reflect.Value, w io.Writer) {
+	value.MethodByName("Serialize").Call([]reflect.Value{reflect.ValueOf(w)})
+}
+
 func (e *encoder) pointer(value reflect.Value) {
-	e.encode(value.Elem())
+	if value.Type().Implements(serializable) {
+		serialize(value, e.buf)
+	} else {
+		e.encode(value.Elem())
+	}
 }
 
 func (e *encoder) dynamicLength(length int, tags tags) {

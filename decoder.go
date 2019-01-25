@@ -3,6 +3,7 @@ package bin
 import (
 	"bytes"
 	"encoding/binary"
+	"io"
 
 	"reflect"
 	"strconv"
@@ -30,6 +31,10 @@ func (d *decoder) decode(value reflect.Value) {
 	}
 }
 
+func deserialize(value reflect.Value, r io.Reader) {
+	value.MethodByName("Deserialize").Call([]reflect.Value{reflect.ValueOf(r)})
+}
+
 func (d *decoder) pointer(value reflect.Value) {
 	if value.IsNil() {
 		element := reflect.New(value.Type().Elem())
@@ -37,7 +42,11 @@ func (d *decoder) pointer(value reflect.Value) {
 			value.Set(element)
 		}
 	}
-	d.decode(value.Elem())
+	if value.Type().Implements(serializable) {
+		deserialize(value, d.buf)
+	} else {
+		d.decode(value.Elem())
+	}
 }
 
 func (d *decoder) strukt(value reflect.Value) {
@@ -46,17 +55,19 @@ func (d *decoder) strukt(value reflect.Value) {
 		field := value.Field(i)
 		fieldType := value.Type().Field(i)
 		tags := tags(fieldType.Tag)
-		switch field.Kind() {
-		case reflect.Ptr:
-			d.pointer(field)
-		case reflect.String:
-			d.string(value, field, tags)
-		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			d.uint(value, field, tags, &bitmaskBytes)
-		case reflect.Array:
-			d.array(field, tags)
-		case reflect.Slice:
-			d.slice(value, field, tags)
+		if checkCondition(tags.cond(), value) {
+			switch field.Kind() {
+			case reflect.Ptr:
+				d.pointer(field)
+			case reflect.String:
+				d.string(field, tags)
+			case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				d.uint(field, tags, &bitmaskBytes)
+			case reflect.Array:
+				d.array(field, tags)
+			case reflect.Slice:
+				d.slice(value, field, tags)
+			}
 		}
 	}
 }
@@ -68,9 +79,9 @@ func (d *decoder) slice(parent reflect.Value, value reflect.Value, tags tags) {
 		sliceElement := value.Index(i)
 		switch sliceElement.Kind() {
 		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			d.uint(parent, sliceElement, tags, nil)
+			d.uint(sliceElement, tags, nil)
 		case reflect.String:
-			d.string(parent, sliceElement, tags)
+			d.string(sliceElement, tags)
 		case reflect.Ptr:
 			d.pointer(sliceElement)
 		case reflect.Struct:
@@ -90,10 +101,7 @@ func (d *decoder) array(value reflect.Value, tags tags) {
 	}
 }
 
-func (d *decoder) uint(parent reflect.Value, value reflect.Value, tags tags, bitmaskBytes *uint64) {
-	if !checkCondition(tags.cond(), parent) {
-		return
-	}
+func (d *decoder) uint(value reflect.Value, tags tags, bitmaskBytes *uint64) {
 	if value.CanAddr() {
 		if tags.bits().nonEmpty() {
 			if tags.bitmask() == "start" {
@@ -116,10 +124,7 @@ func (d *decoder) uint(parent reflect.Value, value reflect.Value, tags tags, bit
 	}
 }
 
-func (d *decoder) string(parent reflect.Value, value reflect.Value, tags tags) {
-	if !checkCondition(tags.cond(), parent) {
-		return
-	}
+func (d *decoder) string(value reflect.Value, tags tags) {
 	if tags.hex().nonEmpty() {
 		size, _ := strconv.Atoi(string(tags.hex()))
 		v := d.readUint(tags.endianness(), size)

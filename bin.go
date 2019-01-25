@@ -2,6 +2,7 @@ package bin
 
 import (
 	"encoding/binary"
+	"io"
 	"reflect"
 	"strconv"
 	"strings"
@@ -115,3 +116,10 @@ func unpoint(p reflect.Value) reflect.Value {
 		return p
 	}
 }
+
+type Serializable interface {
+	Serialize(w io.Writer)
+	Deserialize(r io.Reader)
+}
+
+var serializable = reflect.TypeOf((*Serializable)(nil)).Elem()
