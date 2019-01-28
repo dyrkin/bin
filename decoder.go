@@ -73,19 +73,40 @@ func (d *decoder) strukt(value reflect.Value) {
 }
 
 func (d *decoder) slice(parent reflect.Value, value reflect.Value, tags tags) {
-	length := d.dynamicLength(tags)
-	value.Set(reflect.MakeSlice(value.Type(), length, length))
-	for i := 0; i < length; i++ {
-		sliceElement := value.Index(i)
-		switch sliceElement.Kind() {
-		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			d.uint(sliceElement, tags, nil)
-		case reflect.String:
-			d.string(sliceElement, tags)
-		case reflect.Ptr:
-			d.pointer(sliceElement)
-		case reflect.Struct:
-			d.strukt(sliceElement)
+	if tags.size().nonEmpty() {
+		length := d.dynamicLength(tags)
+		value.Set(reflect.MakeSlice(value.Type(), length, length))
+		for i := 0; i < length; i++ {
+			sliceElement := value.Index(i)
+			switch sliceElement.Kind() {
+			case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				d.uint(sliceElement, tags, nil)
+			case reflect.String:
+				d.string(sliceElement, tags)
+			case reflect.Ptr:
+				d.pointer(sliceElement)
+			case reflect.Struct:
+				d.strukt(sliceElement)
+			}
+		}
+	} else {
+		value.Set(reflect.MakeSlice(value.Type(), 0, 0))
+		for {
+			if d.buf.Len() == 0 {
+				return
+			}
+			sliceElement := reflect.New(value.Type().Elem()).Elem()
+			switch sliceElement.Kind() {
+			case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				d.uint(sliceElement, tags, nil)
+			case reflect.String:
+				d.string(sliceElement, tags)
+			case reflect.Ptr:
+				d.pointer(sliceElement)
+			case reflect.Struct:
+				d.strukt(sliceElement)
+			}
+			value.Set(reflect.Append(value, sliceElement))
 		}
 	}
 }

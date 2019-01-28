@@ -650,3 +650,13 @@ func (s *MySuite) TestDecodeSerializable(c *C) {
 	Decode([]byte{2, 5}, res)
 	c.Assert(res, DeepEquals, &Struct{&MySerializable{uint8(5)}})
 }
+
+func (s *MySuite) TestDecodeSliceOfStructs(c *C) {
+	type Struct struct {
+		M []*MySerializable
+	}
+
+	res := &Struct{}
+	Decode([]byte{2, 5, 2, 6}, res)
+	c.Assert(res, DeepEquals, &Struct{[]*MySerializable{&MySerializable{uint8(5)}, &MySerializable{uint8(6)}}})
+}
