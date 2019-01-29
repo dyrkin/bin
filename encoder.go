@@ -37,7 +37,7 @@ func (e *encoder) strukt(value reflect.Value) {
 		field := value.Field(i)
 		fieldType := value.Type().Field(i)
 		tags := tags(fieldType.Tag)
-		if checkCondition(tags.cond(), value) {
+		if checkConditions(tags.cond(), value) {
 			switch field.Kind() {
 			case reflect.Ptr:
 				e.pointer(field)

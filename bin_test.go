@@ -347,21 +347,22 @@ func (s *MySuite) TestDecodeUnsizedArray(c *C) {
 
 func (s *MySuite) TestDecodeConditional(c *C) {
 	type Struct struct {
+		V0 uint8
 		V1 uint8
-		V2 uint16 `cond:"uint:V1==2"`
+		V2 uint16 `cond:"uint:V1==2;uint:V0==7"`
 		V3 uint8  `cond:"uint:V1==3"`
 	}
 
-	expected := &Struct{V1: 2, V2: 4, V3: 0}
+	expected := &Struct{V0: 7, V1: 2, V2: 4, V3: 0}
 	res := &Struct{}
-	payload := []uint8{2, 4, 0}
+	payload := []uint8{7, 2, 4, 0}
 	Decode(payload, res)
 
 	c.Assert(res, DeepEquals, expected)
 
-	expected = &Struct{V1: 3, V2: 0, V3: 4}
+	expected = &Struct{V0: 7, V1: 3, V2: 0, V3: 4}
 	res = &Struct{}
-	payload = []uint8{3, 4}
+	payload = []uint8{7, 3, 4}
 	Decode(payload, res)
 
 	c.Assert(res, DeepEquals, expected)
