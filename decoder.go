@@ -55,7 +55,7 @@ func (d *decoder) strukt(value reflect.Value) {
 		field := value.Field(i)
 		fieldType := value.Type().Field(i)
 		tags := tags(fieldType.Tag)
-		if checkConditions(tags.cond(), value) {
+		if !(tags.transient() == "true") && checkConditions(tags.cond(), value) {
 			switch field.Kind() {
 			case reflect.Ptr:
 				d.pointer(field)

@@ -351,6 +351,7 @@ func (s *MySuite) TestDecodeConditional(c *C) {
 		V1 uint8
 		V2 uint16 `cond:"uint:V1==2;uint:V0==7"`
 		V3 uint8  `cond:"uint:V1==3"`
+		V4 string `transient:"true"`
 	}
 
 	expected := &Struct{V0: 7, V1: 2, V2: 4, V3: 0}

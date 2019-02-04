@@ -44,6 +44,10 @@ func (t tags) bound() tag {
 	return tag(reflect.StructTag(t).Get("bound"))
 }
 
+func (t tags) transient() tag {
+	return tag(reflect.StructTag(t).Get("transient"))
+}
+
 func valueConvertTo(value reflect.Value, typ reflect.Type) reflect.Value {
 	return value.Convert(typ)
 }
