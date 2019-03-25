@@ -64,20 +64,20 @@ spew.Dump(payload)
 
 Output:
 
-![00,00,00,00,00,00,30,39,30,39,00,00,00,00,00,00](readme/endianness.svg)
+![00,00,00,00,00,00,0x30,0x39,0x30,0x39,00,00,00,00,00,00](readme/endianness.svg)
 
 **Decode**
 
 ```go
-	type Endianness struct {
-		Param1   uint64 `endianness:"be"` //Big Endian
-		Param2   uint64 `endianness:"le"` //Little Endian
-	}
-	
-	endianness := &Endianness{}
-	payload := []uint8{00, 00, 00, 00, 00, 00, 0x30, 0x39,  0x39, 0x30, 00, 00, 00, 00, 00, 00}
-	Decode(payload, endianness)
-	spew.Dump(endianness)
+type Endianness struct {
+    Param1   uint64 `endianness:"be"` //Big Endian
+    Param2   uint64 `endianness:"le"` //Little Endian
+}
+
+endianness := &Endianness{}
+payload := []uint8{00, 00, 00, 00, 00, 00, 0x30, 0x39,  0x39, 0x30, 00, 00, 00, 00, 00, 00}
+Decode(payload, endianness)
+spew.Dump(endianness)
 ```
 
 Output:
