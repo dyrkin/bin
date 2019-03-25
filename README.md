@@ -44,7 +44,11 @@ spew.Dump(bitmask)
 Output:
 
 ```shell
-*Bitmask{5, 1, 9}
+(*bin.Bitmask)({
+ Param1: (uint8) 5,
+ Param2: (uint8) 1,
+ Param3: (uint8) 9
+})
 ```
 
 ### Endianness
@@ -83,5 +87,8 @@ spew.Dump(endianness)
 Output:
 
 ```shell
-*Endianness{12345, 12345}
+(*bin.Endianness)({
+ Param1: (uint64) 12345,
+ Param2: (uint64) 12345
+})
 ```
