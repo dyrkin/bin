@@ -64,7 +64,7 @@ spew.Dump(payload)
 
 Output:
 
-![9D](readme/endianness.jpg)
+![9D](readme/endianness.svg)
 
 **Decode**
 
