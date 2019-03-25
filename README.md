@@ -64,25 +64,24 @@ spew.Dump(payload)
 
 Output:
 
-![9D](readme/endianness.svg)
+![00,00,00,00,00,00,30,39,30,39,00,00,00,00,00,00](readme/endianness.svg)
 
 **Decode**
 
 ```go
-type Bitmask struct {
-    Param1   uint8 `bits:"0b00000111" bitmask:"start"`
-    Param2   uint8 `bits:"0b00001000"`
-    Param3   uint8 `bits:"0b11110000" bitmask:"end"`
-}
-
-bitmask := &Bitmask{}
-payload := []uint8{0x9D}
-Decode(payload, bitmask)
-spew.Dump(bitmask)
+	type Endianness struct {
+		Param1   uint64 `endianness:"be"` //Big Endian
+		Param2   uint64 `endianness:"le"` //Little Endian
+	}
+	
+	endianness := &Endianness{}
+	payload := []uint8{00, 00, 00, 00, 00, 00, 0x30, 0x39,  0x39, 0x30, 00, 00, 00, 00, 00, 00}
+	Decode(payload, endianness)
+	spew.Dump(endianness)
 ```
 
 Output:
 
 ```shell
-*Bitmask{5, 1, 9}
+*Endianness{12345, 12345}
 ```
