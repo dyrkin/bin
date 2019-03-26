@@ -1,10 +1,15 @@
-# Bin - fast binary data serializer/deserializer
+# Bin - fast struct serializer/deserializer
 
-[![Build Status](https://cloud.drone.io/api/badges/dyrkin/bin/status.svg??branch=master)](https://cloud.drone.io/dyrkin/bin)
+[![Build Status](https://cloud.drone.io/api/badges/dyrkin/bin/status.svg?branch=master)](https://cloud.drone.io/dyrkin/bin)
 
 ## Overview
 
-## Examples
+## Table of contents
+* [Features](#features)
+    * [Bitmask](#bitmask)
+    * [Endianness](#endianness)
+
+## Features
 
 ### Bitmask
 
@@ -68,7 +73,7 @@ spew.Dump(payload)
 
 Output:
 
-![00,00,00,00,00,00,0x30,0x39,0x30,0x39,00,00,00,00,00,00](readme/endianness.svg)
+![00 00 00 00 00 00 0x30 0x39 0x30 0x39 00 00 00 00 00 00](readme/endianness.svg)
 
 **Decode**
 
