@@ -8,7 +8,7 @@
 * [Features](#features)
     * [Bitmask](#bitmask)
     * [Endianness](#endianness)
-    * [Bound](#bound)
+    * [Bound](#bound) - support for `uint24`, `uint40`, `uint48`, `uint56`, `int24`, `int40`, `int48`, `int56` data types.
 
 ## Features
 
