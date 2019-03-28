@@ -48,10 +48,6 @@ func (t tags) transient() tag {
 	return tag(reflect.StructTag(t).Get("transient"))
 }
 
-func valueConvertTo(value reflect.Value, typ reflect.Type) reflect.Value {
-	return value.Convert(typ)
-}
-
 func bitmaskBits(value tag) (bitmaskBits uint64) {
 	prefix := string(value[:2])
 	bitmask := string(value[2:])
