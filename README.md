@@ -101,7 +101,7 @@ Output:
 
 ### Bound
 
-This tag is used to add support for `uint24`, `uint40`, `uint48`, `uint56`, `int24`, `int40`, `int48`, `int56` data types.
+Adds support for `uint24`, `uint40`, `uint48`, `uint56`, `int24`, `int40`, `int48`, `int56` data types.
 
 **Encode**
 
@@ -123,22 +123,22 @@ Output:
 **Decode**
 
 ```go
-type Endianness struct {
-    Param1   uint64 `endianness:"be"` //Big Endian
-    Param2   uint64 `endianness:"le"` //Little Endian
+type Bound struct {
+    Param1   uint32 `bound:"3"` //Deserialize uint24 to uint32 
+    Param2   int32  `bound:"3"` //Deserialize int24 to int32
 }
 
-endianness := &Endianness{}
-payload := []uint8{00, 00, 00, 00, 00, 00, 0x30, 0x39,  0x39, 0x30, 00, 00, 00, 00, 00, 00}
-Decode(payload, endianness)
-spew.Dump(endianness)
+bound := &Bound{}
+payload := []uint8{0x39, 0x30, 0x00, 0xC7, 0xCF, 0xFF}
+Decode(payload, bound)
+spew.Dump(bound)
 ```
 
 Output:
 
 ```shell
-(*bin.Endianness)({
- Param1: (uint64) 12345,
- Param2: (uint64) 12345
+(*bin.Bound)({
+ Param1: (uint32) 12345,
+ Param2: (int32) -12345
 })
 ```
