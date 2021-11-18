@@ -63,6 +63,8 @@ func (d *decoder) strukt(value reflect.Value) {
 				d.string(field, tags)
 			case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 				d.uint(field, tags, &bitmaskBytes)
+			case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+				d.int(field, tags)
 			case reflect.Array:
 				d.array(field, tags)
 			case reflect.Slice:
@@ -81,6 +83,8 @@ func (d *decoder) slice(parent reflect.Value, value reflect.Value, tags tags) {
 			switch sliceElement.Kind() {
 			case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 				d.uint(sliceElement, tags, nil)
+			case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+				d.int(sliceElement, tags)
 			case reflect.String:
 				d.string(sliceElement, tags)
 			case reflect.Ptr:
@@ -99,6 +103,8 @@ func (d *decoder) slice(parent reflect.Value, value reflect.Value, tags tags) {
 			switch sliceElement.Kind() {
 			case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 				d.uint(sliceElement, tags, nil)
+			case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+				d.int(sliceElement, tags)
 			case reflect.String:
 				d.string(sliceElement, tags)
 			case reflect.Ptr:
@@ -145,6 +151,21 @@ func (d *decoder) uint(value reflect.Value, tags tags, bitmaskBytes *uint64) {
 	}
 }
 
+func (d *decoder) int(value reflect.Value, tags tags) {
+	if value.CanAddr() {
+		if tags.bound().nonEmpty() {
+			size, _ := strconv.Atoi(string(tags.bound()))
+			v := d.readInt(tags.endianness(), size)
+			value.SetInt(v)
+		} else {
+			v := d.readInt(tags.endianness(), int(value.Type().Size()))
+			value.SetInt(v)
+		}
+	} else {
+		panic("Unaddressable uint value")
+	}
+}
+
 func (d *decoder) string(value reflect.Value, tags tags) {
 	if tags.hex().nonEmpty() {
 		size, _ := strconv.Atoi(string(tags.hex()))
@@ -182,6 +203,32 @@ func (d *decoder) readUint(endianness tag, size int) uint64 {
 		for i := 0; i < size; i++ {
 			t, _ := d.buf.ReadByte()
 			v = v | uint64(t)<<byte(i*8)
+		}
+	}
+	return v
+}
+
+func (d *decoder) readInt(endianness tag, size int) int64 {
+	var v int64
+	buf := make([]uint8, size)
+	d.buf.Read(buf)
+	if endianness == "be" {
+		for i := 0; i < size; i++ {
+			t := buf[i]
+			if i == 0 {
+				v = v | int64(int8(t))<<byte((size-i-1)*8)
+			} else {
+				v = v | int64(t)<<byte((size-i-1)*8)
+			}
+		}
+	} else {
+		for i := 0; i < size; i++ {
+			t := buf[i]
+			if i != 0 {
+				v = v | int64(int8(t))<<byte(i*8)
+			} else {
+				v = v | int64(t)<<byte(i*8)
+			}
 		}
 	}
 	return v
