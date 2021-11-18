@@ -2,5 +2,6 @@ pipeline:
   test:
     image: golang
     commands:
+      - go mod tidy
       - go install
       - go test ./...

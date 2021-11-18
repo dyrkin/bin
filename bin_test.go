@@ -11,13 +11,17 @@ import (
 	. "gopkg.in/check.v1"
 )
 
-func Test(t *testing.T) { TestingT(t) }
+func Test(t *testing.T) {
+	spew.Config.DisablePointerAddresses = true
+	spew.Config.DisableCapacities = true
+	TestingT(t)
+}
 
-type MySuite struct{}
+type BinSuite struct{}
 
-var _ = Suite(&MySuite{})
+var _ = Suite(&BinSuite{})
 
-func (s *MySuite) TestEncode1(c *C) {
+func (s *BinSuite) TestEncodeOfComplexStruct(c *C) {
 	type Bitmask struct {
 		F0 uint8
 		F1 uint16 `bits:"0x0001" bitmask:"start" `
@@ -49,7 +53,7 @@ func (s *MySuite) TestEncode1(c *C) {
 
 	bitmask := &Bitmask{6, 1, 0, 0, 1, 7, 1, 1}
 	str := &Struct{1, 2, bitmask, "0x0A0B", "hello world", [2]uint8{1, 2}, []uint8{3, 4},
-		[]string{"0xffaa", "0xaaff"}, []*Struct2{&Struct2{5}, &Struct2{6}}, 1315, 1315}
+		[]string{"0xffaa", "0xaaff"}, []*Struct2{{5}, {6}}, 1315, 1315}
 
 	payload := Encode(str)
 	spew.Dump(payload)
@@ -57,7 +61,7 @@ func (s *MySuite) TestEncode1(c *C) {
 		0x6f, 0x20, 0x77, 0x6f, 0x72, 0x6c, 0x64, 1, 2, 3, 4, 2, 0xaa, 0xff, 0xff, 0xaa, 2, 5, 6, 0x23, 0x05, 0, 0, 0x05, 0x23})
 }
 
-func (s *MySuite) TestEncode2(c *C) {
+func (s *BinSuite) TestEncodeOfComplexStruct2(c *C) {
 	type AfInterPanCtlData interface{}
 
 	type AfInterPanChkData struct {
@@ -107,7 +111,7 @@ func (s *MySuite) TestEncode2(c *C) {
 		F16 AfInterPanCtlData
 	}
 	test := &Test{F0: 1, F1: 2, F2: 2, F3: 3, F11: "0x00124b00019c2ee9", F12: [2]uint16{4, 5},
-		F13: []*Network{&Network{
+		F13: []*Network{{
 			NeighborPanID:   500,
 			LogicalChannel:  2,
 			StackProfile:    3,
@@ -138,7 +142,7 @@ func (s *MySuite) TestEncode2(c *C) {
 		0x02, 0xaa, 0xff, 0xff, 0xaa, 0x1, 0x0, 0x2})
 }
 
-func (s *MySuite) TestEnumEncodeDecode(c *C) {
+func (s *BinSuite) TestEncodeDecodeEnum(c *C) {
 	type LatencyReq uint8
 
 	const (
@@ -165,7 +169,7 @@ func (s *MySuite) TestEnumEncodeDecode(c *C) {
 	c.Assert(res, DeepEquals, request)
 }
 
-func (s *MySuite) TestDecode(c *C) {
+func (s *BinSuite) TestDecodeOfComplexStruct(c *C) {
 	type Status uint8
 	const (
 		NO Status = iota
@@ -206,7 +210,7 @@ func (s *MySuite) TestDecode(c *C) {
 		F16 *Statuses
 	}
 	test := &Test{F0: 1, F1: 2, F2: 2, F3: 3, F11: "0x00124b00019c2ee9", F12: [2]uint16{4, 5},
-		F13: []*Network{&Network{
+		F13: []*Network{{
 			NeighborPanID:   500,
 			LogicalChannel:  2,
 			StackProfile:    3,
@@ -240,7 +244,7 @@ func (s *MySuite) TestDecode(c *C) {
 	c.Assert(res, DeepEquals, test)
 }
 
-func (s *MySuite) TestEncodeDecode(c *C) {
+func (s *BinSuite) TestEncodeDecodeOfComplexStruct(c *C) {
 	type Capabilities struct {
 		Sys   uint16 `bitmask:"start" bits:"0x0001"`
 		Mac   uint16 `bits:"0x0002"`
@@ -284,7 +288,7 @@ func (s *MySuite) TestEncodeDecode(c *C) {
 		F16 string `size:"1"`
 	}
 	networks := []*Network{
-		&Network{
+		{
 			NeighborPanID:   400,
 			LogicalChannel:  5,
 			StackProfile:    4,
@@ -293,7 +297,7 @@ func (s *MySuite) TestEncodeDecode(c *C) {
 			SuperFrameOrder: 7,
 			PermitJoin:      200,
 		},
-		&Network{
+		{
 			NeighborPanID:   500,
 			LogicalChannel:  2,
 			StackProfile:    3,
@@ -313,7 +317,7 @@ func (s *MySuite) TestEncodeDecode(c *C) {
 	c.Assert(res, DeepEquals, test)
 }
 
-func (s *MySuite) TestDecodeBitmask(c *C) {
+func (s *BinSuite) TestDecodeBitmask(c *C) {
 	type Bitmask struct {
 		F0 uint8
 		F1 uint16 `bitmask:"start" bits:"0x0001"`
@@ -332,7 +336,7 @@ func (s *MySuite) TestDecodeBitmask(c *C) {
 	c.Assert(res, DeepEquals, bitmask)
 }
 
-func (s *MySuite) TestDecodeUnsizedArray(c *C) {
+func (s *BinSuite) TestDecodeUnsizedArray(c *C) {
 	type DataStruct struct {
 		Data []uint8
 	}
@@ -345,7 +349,7 @@ func (s *MySuite) TestDecodeUnsizedArray(c *C) {
 	c.Assert(res, DeepEquals, str)
 }
 
-func (s *MySuite) TestDecodeConditional(c *C) {
+func (s *BinSuite) TestDecodeStructWithConditionalExpression(c *C) {
 	type Struct struct {
 		V0 uint8
 		V1 uint8
@@ -369,7 +373,7 @@ func (s *MySuite) TestDecodeConditional(c *C) {
 	c.Assert(res, DeepEquals, expected)
 }
 
-func (s *MySuite) TestDecodeConditionalDeep(c *C) {
+func (s *BinSuite) TestDecodeStructWithDeepConditionalExpression(c *C) {
 	type Inner struct {
 		V uint8
 	}
@@ -395,7 +399,7 @@ func (s *MySuite) TestDecodeConditionalDeep(c *C) {
 	c.Assert(res, DeepEquals, expected)
 }
 
-func (s *MySuite) TestEncodeConditional(c *C) {
+func (s *BinSuite) TestEncodeStructWithConditionalExpression(c *C) {
 	type Struct struct {
 		V1 uint8
 		V2 uint16 `cond:"uint:V1==2"`
@@ -415,7 +419,7 @@ func (s *MySuite) TestEncodeConditional(c *C) {
 	c.Assert(res, DeepEquals, expected)
 }
 
-func (s *MySuite) TestEncodeConditionalDeep(c *C) {
+func (s *BinSuite) TestEncodeStructWithDeepConditionalExpression(c *C) {
 	type Inner struct {
 		V uint8
 	}
@@ -439,7 +443,7 @@ func (s *MySuite) TestEncodeConditionalDeep(c *C) {
 	c.Assert(res, DeepEquals, expected)
 }
 
-func (s *MySuite) TestDecodeStruct(c *C) {
+func (s *BinSuite) TestDecodeOfComplexStruct2(c *C) {
 	type Bitmask struct {
 		F0 uint8
 		F1 uint16 `bits:"0x0001" bitmask:"start" `
@@ -474,7 +478,7 @@ func (s *MySuite) TestDecodeStruct(c *C) {
 
 	payload := []uint8{1, 2, 1, 2, 1, 2, 6, 9, 0, 7, 3, 5, 6, 2, 7, 8, 2, 1, 2, 3, 4, 1, 2, 0x23, 0x05, 0, 0, 0x05, 0x23}
 	str := &Struct{"0x0201", &Struct2{"0x0201", 0x201, bitmask, [2]uint8{5, 6}, []uint8{7, 8},
-		[]*Struct3{&Struct3{1, 2}, &Struct3{3, 4}}}, 0x201, 1315, 1315}
+		[]*Struct3{{1, 2}, {3, 4}}}, 0x201, 1315, 1315}
 	res := &Struct{}
 	Decode(payload, res)
 
@@ -492,7 +496,7 @@ func Fn() (res *Struct4) {
 	return res
 }
 
-func (s *MySuite) TestDecodeFunctionReturnValue(c *C) {
+func (s *BinSuite) TestDecodeFunctionReturnValue(c *C) {
 	str := &Struct4{1, 2}
 	res := Fn()
 
@@ -520,8 +524,8 @@ type Bench struct {
 
 func newBenchStruct() *Bench {
 	slice := []*BenchInner{
-		&BenchInner{200},
-		&BenchInner{100}}
+		{200},
+		{100}}
 
 	return &Bench{F0: 1, F1: 2, F2: 2, F3: 3, F10: "0x00124b00019c2ee9",
 		F11: []uint16{4, 5}, F12: []byte{1, 2, 3},
@@ -635,7 +639,7 @@ func (m *MySerializable) Deserialize(r io.Reader) {
 	}
 }
 
-func (s *MySuite) TestEncodeSerializable(c *C) {
+func (s *BinSuite) TestEncodeSerializable(c *C) {
 	type Struct struct {
 		M *MySerializable
 	}
@@ -644,7 +648,7 @@ func (s *MySuite) TestEncodeSerializable(c *C) {
 	c.Assert(res, DeepEquals, []byte{2, 5})
 }
 
-func (s *MySuite) TestDecodeSerializable(c *C) {
+func (s *BinSuite) TestDecodeSerializable(c *C) {
 	type Struct struct {
 		M *MySerializable
 	}
@@ -653,12 +657,12 @@ func (s *MySuite) TestDecodeSerializable(c *C) {
 	c.Assert(res, DeepEquals, &Struct{&MySerializable{uint8(5)}})
 }
 
-func (s *MySuite) TestDecodeSliceOfStructs(c *C) {
+func (s *BinSuite) TestDecodeSliceOfStructs(c *C) {
 	type Struct struct {
 		M []*MySerializable
 	}
 
 	res := &Struct{}
 	Decode([]byte{2, 5, 2, 6}, res)
-	c.Assert(res, DeepEquals, &Struct{[]*MySerializable{&MySerializable{uint8(5)}, &MySerializable{uint8(6)}}})
+	c.Assert(res, DeepEquals, &Struct{[]*MySerializable{{uint8(5)}, {uint8(6)}}})
 }
