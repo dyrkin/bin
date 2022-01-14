@@ -1,5 +1,7 @@
 # Bin - fast struct serializer/deserializer
 
+### The readme is not finished
+
 [![Build Status](https://cloud.drone.io/api/badges/dyrkin/bin/status.svg?branch=master)](https://cloud.drone.io/dyrkin/bin)
 
 ## Overview
